@@ -29,41 +29,41 @@ get_data <- function() {
 }
 
 
-load_observations <- function(folder) {
-    data_names <- c("X", "y", "subject")
-    make_path <- function(file) {
-        file.path(dsroot, folder, paste(file, folder, sep="_") %>% paste("txt", sep="."))
-    }
-
-    res <- sapply(make_path(data_names), read.table)
-
-
-    names(res) <- data_names
-    names(res$X) <- labels$features
-    res$X <- res$X[,grepl(paste(desired_features, collapse="|"), labels$features)]
-
-    names(res$y) <- c("activity")
-    res$y <- mutate(res$y, activity = labels$activity_labels[activity])
-
-    names(res$subject) = c("subject")
-
-    cbind(res$subject, res$y, res$X)
-}
-
-
 run_analysis <- function() {
+
+    load_observations <- function(folder) {
+        data_names <- c("X", "y", "subject")
+        make_path <- function(file) {
+            file.path(dsroot, folder, paste(file, folder, sep="_") %>% paste("txt", sep="."))
+        }
+
+        res <- sapply(make_path(data_names), read.table)
+
+        names(res) <- data_names
+
+        names(res$X) <- labels$features
+        res$X <- res$X[,grepl(paste(desired_features, collapse="|"), labels$features)]
+
+        names(res$y) <- c("activity")
+        res$y <- mutate(res$y, activity = labels$activity_labels[activity])
+
+        names(res$subject) = c("subject")
+
+        cbind(res$subject, res$y, res$X)
+    }
 
     # get all labels
     labels <-
         c("activity_labels", "features") %>%
-        lapply(
+        sapply(
             (function(activity) {
                 file.path(dsroot, paste(activity, "txt", sep=".")) %>%
                     read.table(col.names=c("code", "label")) %>%
                     tbl_df %>%
                     select(label) %>%
                     collect %>%
-                    .[["label"]]
+                    .[["label"]] %>%
+                    gsub(pattern = "\\W", replacement = "")
             })
         )
 
